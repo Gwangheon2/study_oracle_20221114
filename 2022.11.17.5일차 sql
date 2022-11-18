@@ -71,10 +71,17 @@ FROM vsnle_parameters;
 
 -- 2.sqlDeveloper > 도구 > 환경설정 > NLS를 확인!
 
+2.3.4 AND, OR, NOT 논리조건 연산자
+--여러개의 조건이 오는 경우 필요한 연산자
+--AND 연산은 조건이 모드 TRUE일때, 최종 TRUE를 반환
+[예제2-13] 30번 부서 사원중 급여가 10000이하인 사원의 정보를 조회하시오
+(여기서 정보는 사번, 이름, 급여, 부서코드를 똣함)
 
-
-
-
+--SQL (=Structured Query Language, 구조화된 질의 언어 <--> 패턴)
+SELECT  employee_id, first_name, salary, department_id
+FROM    employees
+WHERE   department_id = 30 --첫번째 조건
+AND salary <= 10000;       --두번째 조건
 
 
 
