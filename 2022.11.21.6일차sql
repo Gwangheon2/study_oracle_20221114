@@ -229,6 +229,7 @@ from dual;
 lpad example
 
 --LPAD(char1, [,char2]) :왼쪽에서~char1에서 char2로 지정한 문자를 제거한 결과를 반환
+--RPAD(char1, [,char2]) : 오른쪽에서~char1에서 char2초 지정한 문자를 제거한 결과를 반환
 [예제3-12]
 select '[' || ltrim(' ABCDEFG ') || ']' ltrim1,
        '[' || ltrim(' ABCDEFG ',' ') || ']' ltrim2,
@@ -237,25 +238,234 @@ select '[' || ltrim(' ABCDEFG ') || ']' ltrim1,
        ltrim('ABCDEFG', 'BC') ltrim5,
 from    dual;
 
---RPAD(char1, [,char2]) : 오른쪽에서~char1에서 char2초 지정한 문자를 제거한 결과를 반환
---trim() : 방향을 좌,우에서 
+
+
+--trim() : 방향을 좌,우에서 ~char1dptj char2로 지정한 문자를 제거한 결과를 반환
+--왼쪽에서 제거할때는 LEADING
+--오른쪽에서 제거할때는 TRALLING
+--양쪽에서 제거할때는 BOTH , 디폴트값(=생략가능)
+--제거할 문자의 디폴트값도 공백 한 개가 사용된다.
+
+[예제3-14]
+select '[' || TRIM(' ABCDEFG ') || ']' t1, -- both : 왼쪽/오른쪽(=양쪽)공백제거
+        TRIM(LEADING 'A' FROM 'ABCDEFG') T2, --LEADING: 왼쪽에서 (오른쪽방향으로)
+        TRIM(TRAILING 'G' FROM 'ABCDEFG') T3, --TRAILING : 오른쪽에서 (왼쪽방향으로)
+        TRIM(BOTH 'A' FROM 'ABCDEFG') T4, --BOTH 명시
+        TRIM('A' FROM 'ABCDEFG') T5, -- 생략시 DEFAULT
+FROM    dual;
+
+-- SUBSTR(char, position [,length]) : 문자열의 일부를 분리(=추출)해서 반환한다. (추출한다)
+-- CHAR 문자열의 position 으로 지정된 위치로부터 length개의 문자를 떼어내어 그 결과를 반환한다.
+-- length 생략시 : position 부터 문자열의 끝까지 반환
+-- position 값을 0으로 명시할 경우, 디폴트로 1이 적용되어 첫번째 자리부터 length 만큼의 문자열을 반환한다.
+
+[예제3-15]
+select substr('You are not alone', 9, 3) STR1,
+       substr('You are not alone', 5) STR2,
+       substr('You are not alone', 0, 5) STR3,
+       substr('You are not alone', 1, 5) STR4,
+FROM    dual;
+--================================
+-- POSITION의 값을 음수로 작성하면, 그 위치가 오른쪽부터 시작된다.
+---===============================
+select  substr('You are not alone', 9, 3) STR1,
+        substr('You are not alone', 5) STR2,
+        substr('You are not alone', 0, 5) STR3,
+        substr('You are not alone', 1, 5) STR4,
+FROM    dual;
+
+-- REPLACE(char, search_string [,replace_string])
+-- 문자열중 일부를 다른 문자열로 변경하여, 그 결과를 반환한다.
+-- XSS(Cross site script) 해킹 공격 --> 검색하는 서비스, 여러 사용자의 입력을 받는 서비스를 제공할때
+-- 사용할수도 있고, 말 그대로 문자열 일부를 다른 문자로 치환할 수 있음
+-- 문자열은 대,소문자를 구분 vs SQL 자체는 대소문자를 구분하지 않는다.
+
+SELECT  REPLACE('You are noe along', 'You', 'We') REP1
+        REPLACE('You are noe along', 'not') || ']' REP2
+        REPLACE('You are noe along', 'not', null) || ']' REP3
+FROM    dual;        
+
+-- TRANSLATE(char, from_string, to_string)
+-- char 문자열에서 해당문자를 찾아 1:1로 변환한 결과를 반환한다.
+[예제3-18]
+select translate('u! You are not alone', 'You', 'We') TRANS
+from    dual;
+
+--Quiz. '너는 나를 모르는데 나는 너를 알겠느냐' 을 REPLACE와 TRANSLATE로 변환하여 다음과 같이 변경해보세요
+--1.REPLACE 함수를 사용 --> 나는 나를 모르는데 나는 나를 알겠느냐
+SELECT REPLACE('너는 나를 모르는데 나는 너를 알겠느냐', '너', '나') rep -- '너'를 '나'로 변경
+FROM    dual;
+
+--2.TRANSLATE 함수를 사용--> 나는 너를 모르는데 너는 나를 알겠는냐
+SELECT TRANSLACE('너는 나를 모르는데 나는 너를 알겠느냐', '너나', '나너') TRANS
+FROM    dual;
+
+
+
+--INSTR(char, search_string [,position] [,_th]) 
+--문자열에서 특정 문자열의 시작 위치를 반환하는 함수
+--char 는 대샹 문자열, search_string은 찾는 문자열
+--position은 문자열의 찾는 시작위치, _th는 몇번째 인지를 명시(단, 생략시 디폴트값은 1)
+--찾는 문자열이 발견되지 않으면 0을 반환한다.
+
+[예제3-19]
+SELECT  INSTR('Every Sha-la-la-la', 'la') INSTRL,
+        INSTR('Every Sha-la-la-la', 'la', 7) INSTRL2,
+        INSTR('Every Sha-la-la-la', 'la', 1, 2) INSTRL3,
+        INSTR('Every Sha-la-la-la', 'la', 12, 2) INSTRL4,
+        INSTR('Every Sha-la-la-la', 'la', 15, 2) INSTRL5,
+FROM    dual;
+
+SELECT 'seonyeonghun@kakao,com' EMALL_ADDR,
+        SUBSTR('seonyeonghun@kakao,com', 1, 12) EMALL_ID,
+        SUBSTR('seonyeonghun@kakao,com', 14) EMALL_DOMAIN
+FROM    dual;
+
+SELECT SUBSTR('seonyeonghun@kakao,com',INSTR('seonyeonghun@kakao,com','@',) EMALL_ID,
+       SUBSTR() EMALL_DOMAIN
+FROM    dual;
+
+
+
+SELECT 'oracle21c12312312312@kakao,com' EMALL_ADDR,
+        SUBSTR(이메일주소, INSTR(문자열,찾을문자[,시작위치][,갯수]),) EMALL_ID,
+        SUBSTR(이메일주소, INSTR(문자열,찾을문자[,시작위치][,갯수]),) EMALL_DOMAIN
+FROM    dual;
+
+
+SELECT employee_id, first_name, LOWER(TRANSLATE(email, 'akn','*!')) || '@oracle.com' email
+from    employees;
+
+
+--LENGTH(char) vs LENGTH(char)
+--문자열의 길이를 반환합니다. vs 문자열의 BYTE 값을 반환합니다.
+--영문 1자는 1BYTE, 동아시아(한,중,일) 지역의 1글자는 3~4BYTE로 설정되므로 실제 DB 설계시 저장공간,컬럼의 정의시
+--데이터에 따른 길이동을 설계할때 참조
+
+
+
 
 --3.3 날짜함수
+--날짜와 시간을 연산의 대상으로 하는 함수
+select  sysdate -- sysdate()가 함수 아닌가? 그만큼 자주 사용하는 함수라서 간단하게 표기
+from    dual;
+-- 날짜의 형태를 확인하는 명령
+select *
+from v$nls_parameters;
+
+-- RR/MM/DD HH:MI:SS로 형태를 바꾸어야 시간정보가 보임
+ALTER SESSION SET nls_date_format = 'RR/MM/DD HH24:MI:SS'; -- 현재 로그인한 HR 스키마에서 일시적으로 바꾸는것이지 영구적인 설정 변경은 아님.
+
+--매번 시간/ 날짜 정보를 출력하기 위해 설정을 바꾸는 것 보다는,
+--시간/날짜 함수 또는 변환함수를 사용하는 것이 좋다!!
+
+-- ADD_MONTHS(DATE, N)
+-- 특정 날짜에 지정한 개월의 수를 더해서 그 결과를 날짜로 반환하는 함수
+-- ADD : 추가, MONTH: 월/개월
+
+SELECT ADD_MONTHS(SYSDATE, 1) MONTH1,
+        ADD_MONTHS(SYSDATE, 2) MONTH2,
+        ADD_MONTHS(SYSDATE, -3) MONTH3
+FROM    dual;
+
+-- MONTHS_BETWEEN(datel, date2)
+-- 두 날짜 사이의 개월 수(=차이)를 반환하는 함수
+-- date1 - date2 (이후 날짜 - 이전 날짜)
+
+[예제3-22]
+--날짜 데이터, 문자 데이터는 '' 로 묶어서 표현
+-- RR/MM/DD
+-- YYYY-MM-DD
+SELECT TRUNC (MONTHS_BETWEEN(SYSDATE, '2013-03-20')) || '개월' PASSED,
+       TRUNC (MONTHS_BETWEEN('2013-08-28', SYSDATE)) || '개월' REMAINED
+FROM    DUAL;
+
+-- LAST_DAY(date)
+--date에 해당하는 마지막 날짜를 반환한다.
+-- EX> 날짜가 3월에 해당하면, 31을 반환하고 4월이면 30일을 반환한다.
+[예제3-23]
+SELECT  LAST_DAY(SYSDATE) LAST1,
+        LAST_DAY('2013-02-01') LAST2,
+FROM    dual;
+
+-- NEXT_DAY(date, char)
+-- date 이후의 날짜에서 char로 명시된 첫번째 일자를 반환
+-- char에 요일에 해당하는 문자 SUNDAY, MANDAY,...와 약어인 SUN, MON,..
+-- 또는 요일에 해당하는 숫자 1:일요일, 2:월요일,..7:토요일
+-- v$nls_parameter 설정에서 NLS_LANGUAGE, NLS_TERRIORY 설정
+SELECT*
+FROM V$NLS_PARAMETERS;
+
+
+[예제3-24]
+SELECT  NEXT_DAY(SYSDATE, '월요일') NEXT1,
+        NEXT_DAY(SYSDATE, '금요일') NEXT2,
+        NEXT_DAY(SYSDATE, '일') NEXT3,
+        NEXT_DAY(SYSDATE, 4) NEXT4--1:일요일, 2,3,4:수요일
+FROM    dual;
+
+--ROUND(n [,i]) : -i면 정수부, i는 소수부에서 반올림하여 반환 <숫자함수>
+--ROUND(date, fmt) : 반올림 된 날짜를 fmt에 맞게 그결과를 반환 <날짜함수>
+[예제3-25]
+--변환함수 3가지
+--TO_DATE() : 문자를 날짜로
+--TO_CHAR() : 숫자를 문자로
+--TO_NUMBER() : 문자를 숫자로
+--* JAVA 형변환(Casting) 함수처럼 사용, ORACLE에서는 한번에 숫자 --> 날짜로 변환 불가, 단계적으로 변환은 가능
+
+SELECT ROUND(TO_DATE('2013-06-30'), 'YYYY') R1, -- TO_DATE() : 문자 데이터를 날짜 데이터로 전환하는 함수
+       ROUND(TO_DATE('2013-07-01'), 'YYYY') R2,
+       ROUND(TO_DATE('2013-12-15'), 'MONTH') R3,
+       ROUND(TO_DATE('2013-12-16'), 'MM') R4,
+       ROUND(TO_DATE('2013-05-27 11:59:59', 'YYYY-MM-DD HH24:MI:SS'), 'DD') R5,
+       ROUND(TO_DATE('2013-05-27 12:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'DD') R6,
+       ROUND(TO_DATE('2013-05-30', 'DD')) R7,
+       ROUND(TO_DATE('2013-05-30', 'DD')) R8
+FROM    dual;
+
+SELECT *
+FROM v$nls_parameters; -- 동아시아(한국) 에서 설치된 데이터베이스의 설정값
+
+SELECT *
+FROM nls_database_parameters; -- 실제 오라클 데이터베이스 기본 세팅
+--언어를 영문으로 (임시) 변경
+
+
+
+
 --3.4 변환함수
+--TO_DATE() : 문자를 날짜로
+--TO_CHAR() : 숫자를 문자로
+--TO_NUMBER() : 문자를 숫자로
+/*
+    숫자------> 문자 --------> 날짜
+TO_NUMBER() <----> TO_CHAR() <----->    TO_DATE()
+     숫자 <----- 문자 <---------- 날짜
+*/
+
+
+--3.4.1 TO_CHAR(date/n [,fmt]) : 숫자/날짜를 문자로 변환하는 함수
+SELECT TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS') CHAR1,
+        TO_CHAR(SYSDATE, 'YYYY') CHAR2,
+        TO_CHAR(SYSDATE, 'YYYY/MM/DD') CHAR3
+FROM dual; -- 시간정보 출력X
+
+SELECT TO_CHAR(TO_DATE('0630', 'MM/DD'), 'RRRR/MM/DD') CHAR --ROUND : 반올림
+FROM dual;
+
+SELECT TO_CHAR(TO_DATE('0297', 'MM/RR'), 'MM/RRRR')
+FROM dual;
+
+
+
+
+
+
+
+
+
 --3.5 NULL 관련 함수
---3.6 DECODE와 
-
-
-
-
-
-
-
-
-
-
-
-
+--3.6 DECODE와
 
 
 
