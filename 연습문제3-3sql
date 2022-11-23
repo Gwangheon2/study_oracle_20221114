@@ -1,0 +1,73 @@
+--[연습문제3-3]
+-- 1. 사원 테이블에서 30번 부서원의 사번, 성명, 급여 개월수를 조회하는 쿼리문을 작성하시오
+-- 단, 근무 개월수를 오늘 날짜를 기준으로 날짜 함수를 사용하여 계산하시오
+-- add_months(date, n) : n 개월수를 더하거나 뺀 날짜를 알려주는 함수
+-- months_between(date,) : datel 에서 date2를 뺀 개월수를 반환하는 함수
+--사원들의 근무 관련 데이터 : 입시일(hire_date)
+select  employee_id emp_id, first_name||' '||last_name name,
+        to_char(salary, '$9,999,999') salary,
+        round(months_between(sysdate, hire_date)) "근무 개월수",
+        round(months_between(sysdate, hire_date)/12) "근속 년수"
+from    employees
+where   department_id = 30
+order by 1;
+
+--2.급여가 12000달러 이상인 사원의 사번, 성명, 급여를 조회하여 급여 순으로 결과를 정렬하시오
+--단, 급여는 천단위 구분기호를 사용하여 표시
+
+select  employee_id emp_id, first_name||' '||last_name name,
+        to_char(salary, '$9,999,999') salary,
+        department_id, job_id
+from    employees
+where   salary >= 12000
+order by 3;
+
+
+
+
+--3. 2005년 이전에 입사한 사원들의 사번, 성명, 입사일, 업무 시작 요일을 조회하시오
+--단, 업무 시작 요일이란 입사일에 해당하는 요일을 지칭한다.
+select  employee_id 사번, first_name||' '||last_name 성명, hire_date 입사일,
+        initcap(lower(to_char(hire_date, 'day'))) 업무시작요일1,
+        initcap(lower(to_char(hire_date, 'dy'))) 업무시작요일2
+from    employees
+where   to_char(hire_date, 'yyyy') < '2005'; --24 rows
+
+--시본설정이 lorean이면, 수요일 or 수 라고 나옴.
+--현재 로그인한 hr 스키마에서만 변경, 다른 스키마로 접속하거나 재접속하면 원래의 설정으로 돌아감.
+
+alter session set nls_date_language = 'english';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+select *
+from    departments
+where   department_id = 30;
+
+
+
+
+
+
+
+
+
+
+

@@ -458,14 +458,228 @@ FROM dual;
 
 
 
+[예제3-27]
+--기본 데이터베이스 환결설정 : RR/MM/DD
+
+SELECT  TO_CHAR(SYSDATE, 'YYYY-MON-DD') FMT1,
+        TO_CHAR(SYSDATE, 'RR/MM/DD HH:MI:SS') FMT2,
+        TO_CHAR(SYSDATE, 'YY-MM-DD DAY') FMT3
+FROM    dual;        
 
 
+[예제3-28]
+select  to_char(12345, '9999999') num_fmt1,
+        to_char(12345, '0999999') num_fmt2,
+        to_char(12345, '$99999.99') num_fmt3,
+        to_char(12345, 'L9,999,999') num_fmt4,
+from    dual;
+
+--샘플 데이터에 적용해보기
+select employee_id, last_name, to_char(salary * 12, '$9,999,999') "Annual Salary"
+from    employees
+order by    "Annual Salary" desc;
 
 
+--to_number()
+--문자를 숫자로 변환하여 그 결과를 반환
+select 1 + '1' sum
+from    dual; -- 묵시적 캐스팅(=자동으로 형식에 맞춰서)
+
+select to_number('12345') num1,
+        to_number('12345') num2
+from dual;
+
+
+-- to_date(char [,fmt])
+-- 문자 데이터를 날짜 데이터로 변환한 결과를 반환하는 함수
+
+select to_date('2013-05-27') date, --문자를 단순히 년-월-일 형태로 바꿀때
+        to_date('2013-06-27 11:12:35', 'yyyy/mm/dd hh:mi:ss am') date2 -- 내부설정이 rr/mm/dd로만..
+from    dual;
+
+
+--한번만 테스트
+ALTER SESSION SET NLS_DATEFORMAT = 'RR/MM/DD HH24:MI:SS'; --매번 설정을 변경해가면서? NO!
 
 
 --3.5 NULL 관련 함수
---3.6 DECODE와
+--null : 값이 0이 아니라, 데이터가 null인 (=빈, 입력되지 않은 상태)
+select  employee_id, last_name, salary, commission_pct,
+        to_char(salary + salary * commission_pct, '$9,999,999') bonus
+from    employees;
+
+--3.5.1 nvl(exprl, expr2)
+--첫번째 expr1이 null이면, expr2를 반환하고
+--              null아니면, expr1을 반환하는 함수
+--expr1, expr2 데이터 타입은 서로 같아야함.
+
+--커미션 금액이 1000 달러 미만인 사원들에게 보너스 지급하고자 할때, 이들의 명단을 조회해보자
+[예제 3-31] 사번, 이름, 급여, 커미션을, 커미션 금액을 조회하시오
+select employee_id emp_id, last_name, salary, commission_pct,
+        commission_pct  * salary incentive
+from    employees
+where   commission_pct * salary < 1000; 
+
+--commission_pct가 null인사원 :총 107명중 50명
+select *
+from    employees
+where   commission_pct is null;
+
+--기존 employees 테이블의 인센티브 컬럼이 null인
+
+
+--3.5.2 nvl2(expr1, expr2, expr3)
+--expr1이 null 이면 expr3 반환하고
+--expr1이 null 아니면 expr2를 반환하는 힘스
+--nvl(expr1, expr2) 와 차이점을 기준으로 구분
+
+[예제3-33] salary와 commission_pct를 곱해서 인센티브를 지급한다고 할때, commission_pct가 null이면 총급여는
+salary 만, null이 아니면 salary + 인센티브가 총 급여가 된다
+select employee_id, last_name, salary, commission_pct,
+        nvl2(commission_pct, 'salary + commission_pct', 'salary') total_salary
+from    employees;
+
+select  employee_id, last_name name,
+        to_char(salary, '$9,999,999') salary,
+        nvl(commission_pct, 0) comm_pct,
+       
+        nv2(commission_pct,
+        to_char(salary* (1+ commissioon_pct), '$9,999,999'),
+        -- salary + salary * commission_pct <--> salary * (1+ commission_pct)
+        to_char(salary, '$9,999,999')) total_salary
+from    employees
+
+
+--3.5.3 COALESCE(exp1, exp2, exp3,...)
+--함수의 파라미터 목록에서 처음으로 NULL이 아닌 값을 반환하는 함수
+--따라서 파라미터 목록에서 반드시 NULL 아닌 값이 있어야함
+--만약, 모두 NULL 이라면 NULL 반환하는 함수
+ 
+ [예제3-35]
+SELECT COALESCE('A', 'B', 'C', NULL) first,
+        COALESCE(NULL, 'B', 'C') second,
+        COALESCE(NULL, NULL, 'C' NULL) third
+        
+        
+
+--COALESCE 실습용 테이블을 생성
+CREATE TABLE contact (
+    ID NUMBER,
+    NAME VARCHAR2 (30),
+    HOME_NUM CHAR(11),
+    PHONE_NUM CHAR(11),
+    OFFICE_NUM CHAR(11)
+);
+
+--실습용 샘플 데이터 삽입
+INSERT INTO CONTACT
+VALUES (1, '홍길동', '0623456789', NULL, NULL);
+INSERT INTO CONTACT
+VALUES (2, '이순신', NULL, '0103456789', NULL);
+INSERT INTO CONTACT
+VALUES (3, '홍두깨', NULL, NULL, '0612223333');
+INSERT INTO CONTACT
+VALUES (4, '하니', '0107778888', NULL, '0612223333');
+
+--조회
+SELECT*
+FROM    CONTACT;
+
+-- COALESCE 사용
+SELECT ID, NAME, COALESCE(HOME_NUM, PHONE_NUM, OFFICE_NUM) TEL
+FROM    CONTACT;
+
+--1) 현재는 MEMORY에서 트랜잭션 처리--> 실제 물리데이터로 저장하려면? COMMIT처리, 아니면 ROLLBACK;
+COMMIT; -- ORACLE DBMS가 파일로 저장하고
+DROP TABLE CONTACT;-- 테이블과 데이터를 모두 삭제
+
+--2) CONTACT 생성 전, 데이터 입력 전으로 돌아가려면
+--ROLLBACK;
+
+--[연습문제3-4]
+--1. 사원의 사번, 이름, 부서, 매니저번호를 조회하는 쿼리를 작성하시오
+--단, 매니저가 있는 사원은 MANGER로 표시, 매니저가 없는 사원은 NO MANGER라고 표시하시오
+--매니저도 사원중 하나
+--단, 사장은 매니저가 없다.
+SELECT  EMPLOYEE_ID, FIRST_NAME||' '||LAST_NAME NAME, DEPARTMENT_ID,
+        NVL2(NAMAGER_ID, 'MANAGER', 'NO MANGER') MANAGER
+FROM    EMPLOYEES
+--WHERE   MANAGER_ID IS NOT NULL;
+ORDER BY EMPLOYEE_ID;
+
+
+
+
+
+
+--3.6 DECODE와 CASE
+--SQL(STRUCHURED QUERY LANGUAGE)/ 구조화된 질의어 VS 프로그래밍 언어/ 절차적인 언어
+--프로그래밍 언어에서 조건에 따라 명령을 실행하는 IF문 상용합니다. 오라클에서는 DECODE와 CASE가 같은 역할을 합니다
+--* PL/SQL (=SQL을 확장한 절차적 프로그래밍 언어) : 프로그래밍 문법 + SQL(오라클 전용 문법)
+--T-SQL: 다른 DBMS에서 사용하는 PL/SQL의 이름
+
+--IF~ ELSE IF 구문과 유사!
+--DECODE(EXP, SEARCH1, RESULT1, SEARCH2,  RESULT2, .....[,DEFAULT])
+--EXP 표현식을 검사하여 SEARCH1과 일치하면 RESULT1을, SEARCH2와 일치하면 RESULT2를,...일치하지 않으면 DEFAULT를
+--반환하는 함수
+
+[예제3-36]
+보너스 지급에 있어서 20번 부서는 급여의 20%를 보너스로 지급, 30번 부서는 급여의 30%를 보너스로
+지급, 40번 부서는 급여의 40%를 보너스로 지급하며 그외의 부서는 보너스를 지급하지 않는다고 할때,
+각 부서별 보너스를 사원들의 정보를 조회하시오
+SELECT  employee_id emp_id, last_name, TRIM(department_id)dept_id, TO_CHAR(salary, '$9,999,999') salary,
+        LTRIM(TO_SHAR(DECODE(department_id, 20, salary * 0.2,
+                              30, salary * 0.3,
+                              40, salary * 0.4,
+                              0), '$9,999,999')) bonus
+FROM    employees
+WHERE   manager_id IS NOT NULL
+ORDER BY    employee_id;
+
+
+--3.6.2 CASE
+--함수보다 더 큰 개념을 가진 표현식
+--DECADE는 동등 비교만 가능한데, CASE는 더 다양한 연산(동등비교, 범위비교,..)을 할수있다
+--1) DECODE와 같은 동등비교
+CASE exp WHEN search1 THEN result1
+         WHEN search2 THEN result2
+         ...계속..
+         [ELSE default]
+END
+
+--2) DECODE와 다르게 조건비교
+CASE WHEN condition1 (exp, operator) THEN result1
+     WHEN condition2 (exp, operator) THEN result2
+     ..계속..
+     [ELSE default]
+END
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
