@@ -1,0 +1,184 @@
+--4장,그룹함수
+--집계함수 : SUM, MIN ...
+--그룹함수 : Group by
+
+--4.1 DISTINCT
+--함수는 함수명()형태 VS SYSDATE
+--hr스키마 : 여러 테이블중 Employees 테이블의 정보중 EMPLOYEE_ID 주 식별자(PRIMARY KEY = NOT NULL + UNIQUE)
+DESC EMPLOYEES;
+
+--테이블의 제약조건 : 식별자 등...
+SELECT CONSTRAINT_NAME, CONSTRAINT_TYPE
+FROM    USER_CONSTRAINTS
+WHERE   TABLE_NAME = 'EMPLOYEES';
+--PK (=PRIMARY KEY)
+--FK (=FOREIGN KEY, 다른 테이블에서의 PK가 참조하는 테이블의 FK 관계)
+--NN (=NOT NULL) : 널을 허용하지 않음
+--UK (=UNIQUE KEY) : 중복을 허용하지 않지만 NULL 허용
+--*PK = UK + NN (PK는 중복과 NULL을 허용하지 않음)
+
+[예제4-1] 사원들이 소속된 부서를 조회하는 쿼리를 작성
+SELECT  EMPLOYEE_ID, FIRST_NAME, DEPARTMENT_ID
+FROM    EMPLOYEES;
+
+[예제4-1] 사원들이 소속된 부서를 조회하는 쿼리를 작성
+SELECT DISTINCT DEPARTMENT_ID, EMPLOYEE_ID
+FROM    EMPLOYEES;
+
+-- DISTINCT는 SELECT 목록의 모든 컬럼에 적용된다
+-- DISTINCT로 DEPARTMENT_ID, EMPLOYEE_ID를 조회하면 DEPARTMENT_ID와 EMPLOYEE_ID를 조합한 결과가
+-- 중복되지 않은 데이터을 조회해준다
+
+--[연습문제4-1]
+--1. 사원테이블에서 이 회사의 매니저들을 조회하는 쿼리문을 작성하시오
+SELECT DISTINCT MANAGER_ID
+FROM    EMPLOYEES;
+
+SELECT*
+FROM    EMPLOYEES
+WHERE   EMPLOYEE_ID = 100;
+
+--매니저 정보
+SELECT  EMPLOYEE_ID, FIRST_NAME, LAST_NAME, DPARTMENT_ID,JOB_ID, HRIE_DATE
+FROM    EMPLOYEES
+WHERE   EMPLOYEE_ID IN (100,101,102,103,104);
+
+--4.2 집계함수
+--함수의 형태: 하나의 결과행을 반환(COUNT,MAX,MINMSUM,AVG) VS 여러개의 결과행을 반환(DISTINCT)
+
+--4.2.1 COUNT()
+--데이터의 행이 몇건이 존재하는지 갯수를 반환하는 함수
+--데이터 값이 NULL인 행은 제외된다.
+
+[예제4.3]
+SELECT COUNT(*), COUNT(EMPLOYEE_ID), COUNT(DEPARTMENT_ID), COUNT(COMMISSION_PCT),
+FROM    EMPLOYEES;
+
+-- 4.2.2 SUM()
+-- 숫자 데이터 컬럼의 전체 합계를 계산한 결과를 반환하는 함수
+--오라클 숫자 데이테 타입 : NUMBER
+-- * 오라클에서 INT나, DOUBLE, LONG, FLOAT, TINYINT,.. 다른 프로그래밍 언어의 숫자 데이터 타입을 사용하면?
+-- 내부적으로 다~ NUMBER 취급
+
+CREATE TABLE tax (
+    id INT PRIMATY KEY,
+    title CHAR,
+    SOURCE VARCHAR(10)
+);
+
+DESSC tax;
+
+--[예제4-4] 사원들의 급여 통계를 조회하시오
+SELECT COUNT(*) "총 사원수", TO_CHAR(SUM(salary), '9,999,999') "급여 총계"
+         TO_CHAR(round(SUM(salary) / 107), '9,999,999') "1인당 급여 편균"
+FROM    EMPLOYEES;
+
+--4.2.3 MAX()와 MIN()
+--데이터 컬럼에서 가장 큰 값을 반환하는 함수 : MAX()
+--              " 작은        "          : MIN()
+SELECT  EMPLOYEE_ID, LAST_NAME, MAX(SALARY), MIN(SALARY)
+FROM    EMPLOYEES;
+/* 원인 : 집계함수와 함께 사용한 일반 컬럼은 GROUP BY 절에 명시해야 함
+ORA-00937: 단일 그룹의 그룹 함수가 아닙니다
+00937. 00000 - "NOT A SINGLE-FROUP GROUP FUNCTION"
+*/
+
+SELECT MAX(salary), MIN(salary)
+FROM    employees;
+
+--4.2.4 AVG()
+--컬럼의 평균값을 계산하는 함수
+--성적 평균 = 총계 / 과목수
+
+SELECT TRUNC(AVG(salary), 1) 평균, SUM(salary) 합계, COUNT(EMPLOYEE_ID)"총 사원수"
+FROM EMPLOYEES;
+
+
+
+--4.3 GROUP BY 절
+--GROUP BY 절에 특정 조건을 사용해서 데이터 행을 하나의 그룹으로 나눌수 있다(DISTINCT)
+--GROUP BY 절에는 그룹 짓는 기준의 컬럼을 지정하낟.
+--그룹함수(COUNT, SUM,AVG, MAX, MIN) 사용시 일반 컬럼을 GROUP BY절에 지정해야 함
+--*그렇지 않으면 오류발생 : ORA
+
+[예제4-8] 부서별 급여 총액, 부서별 사원의 수, 부서별 평균 급여를 조회하는 쿼리를 작성하시오
+SELECT  SUM(salary) TOTAL_SAL. COUNT(DEPARTMENT_ID) CNT, ROUND(AVG(salary)) AVG_SAL
+FROM    EMPLOYEES;
+
+[예제4-9] 부서별, 업무별 급여총액, 평균급여를 조회하는 쿼리를 작성하시오
+SELECT  DEPARTMENT_ID, JOB_ID, SUM(SALARY), AVG(SALARY)
+FROM    EMPLOYEES;
+GROUP BY  DEPARTMENT_ID, JOB_ID;
+
+
+
+/* SQL 전체 작성 순서
+SELECT
+FROM
+WHERE -- 일반 조건절
+GROUP BY 
+HAVING -- 일반 조건절, 그룹함수 조건절
+ORDER BY -- 항상 마지막
+*/
+
+[예제4-10] 80번 부서의 급여 총액과 평균급여를 조회하는 쿼리를 작성하시오
+SELECT  DEPARTMENT_ID, SUM(SALARY) SUM_SALARY, ROUND(AVG(SALARY), AVG_SALARY
+FROM    EMPLOYEES
+WHERE   DEPARTMENT_ID = 80
+GROUP BY  DEPARTMENT_ID;
+
+[예제4-11] 80번 부서의 평균급여를 조회하시오
+SELECT ROUND(AVG(SALART)) AVG_SAL
+FROM    EMPLOYEES;
+WHERE   DEPARTMENT_ID = 80;
+
+[예제4-12] 부서에 소속된 사원의 수가 5명 인하인 부서와 그수를 조회하시오
+SELECT  DEPARTMENT_ID, COUNT(*)
+FROM    EMPLOYEES
+GROUP BY   DEPARTMENT_ID
+HAVING  COUNT(*) <= 5
+ORDER BY    1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
