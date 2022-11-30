@@ -104,22 +104,352 @@ AND     e.salary = ( SELECT MAX(salary)
                      FROM    employees); --일반 조건절
 -- FROM employees e INNER JOIN
 
+--6-2 (단일 컬럼)다중 행 서브쿼리 (p.53)
+-- IN, NOT IN, ANY, ALL, EXISTS 와 함께 사용한다.
+
+--6.2.1 IN 연산자
+--여러개의 값이 존재할때 사용
+SELECT employee_id, first_name, job_id
+FROM    employees
+--WHERE   department_id IN (10, 30, 50); -- 일반퀄리에서 IN 연산자
+WHERE   department_id = 10 
+OR  department_id = 30
+OR  department_id = 50;
+
+[예제6-5] 근무지(=위치코드)가 영국(=uk) 부서코드, 위치코드, 부서명 정보를 조회하시오
+-- 다중 행 서브쿼리 해결
+SELECT  department_id, location_id, department_name
+FROM    departments
+WHERE   location_id IN (SELECT location_id
+                        FROM   locations
+                        WHERE  country_id = 'UK' );
+
+SELECT *
+FROM    department;
+WHERE   country_id IN ( 2400, 2500, 2600);
+
+SELECT *
+FROM    locations;
+WHERE   country_id = 'UK' 
+
+
+--미국에 위치한 부서의 정보(부서코드, 부서명, 위치코드)
+SELECT *
+FROM    locations
+WHERE   country_id = 'US';
+
+
+SELECT  department_id, location_id, department_name
+FROM    departments
+WHERE   location_id IN (SELECT location_id
+                        FROM   locations
+                        WHERE  country_id = 'JP' );
+
+
+--6.2.2 ANY 연산자
+--서브쿼리 결과값 중 어느 하나의 값만 만족하면 되는 행을 반환한다.
+[예제6-6] 70번 부서에 근무하는 부서원의 급여보다 높은 급여를 받는 사원의 사번, 이름, 부서번호, 급여를 조회하시오
+
+SELECT salary
+FROM    employees
+WHERE   department_id = 80
+ORDER BY 1;
+
+SELECT  employee_id, first_name, department_id, salary
+FROM    employees
+WHERE   salary > ANY ( SELECT salary
+                       FROM    employees
+                       WHERE   department_id = 70);
+
+Order by salaet;
+
+
+/* 원인 : 서브퀘리 결과행이 다중 행을 반환할때
+ora-01427: 단일 행 하위 질의에 2개 이상의 행이 리턴되었습니다
+01427. 00000 - "
+--==================================
+-->ANY는 >최소값(min)으로 대체 가능
+--================================
+
+
+SELECT  employee_id, first_name, department_id, salary
+FROM    employees
+WHERE   salary > ( SELECT MIN (salary)
+                   FROM    employees
+                   WHERE   department_id = 70);
+Order by salaet;
+
+[예제6-8] 10번 부서원의 급여보다 적은 급여를 받는 사원의 사번, 이름, 부서번화, 급여를 조회하시오
+SELECT COUNT(*)
+FROM    EMPLOYEES
+GROUP BY DEPARTMAN_ID
+ORDER BY    1;
+
+
+SELECT salary
+FROM    EMPLOYEES
+WHERE   DEPARTMENT_ID = 10;
+
+SELECT  salary
+FROM    employees
+
+--서브쿼리
+SELECT  employee_id, LAST_name, department_id, salary
+FROM    employees
+WHERE   salary < ANY ( SELECT salary
+                       FROM    employees
+                       WHERE   department_id = 80)
+ORDER BY 4;
+
+
+--==================================
+--<ANY는 < 최대값(MAX)으로 대체 가능
+--================================
+
+SELECT  employee_id, LAST_name, department_id, salary
+FROM    employees
+WHERE   salary < ANY ( SELECT MAX(salary)
+                       FROM    employees
+                       WHERE   department_id = 80)
+ORDER BY 4;
+
+
+--6.2.3 ALL연산자
+--ANY : 하나라도 일치하면
+--ALL : 모두 일치하면
+--서브쿼리의 결과 값 모두에 만족하는 결과행을 반환한다.
+[예제6-10] 100번 부서원 모두의 급여보다 높은 급여를 받는 사원의 사번, 이름, 부서번호, 급여를
+급여의 오름차순으로 정렬하여 조회하시오
+
+SELECT SALARY
+FROM    EMPLOYEES
+WHERE   DEPARTMENT_ID = 100;
+
+SELECT  EMPLOYEE_ID, LAST_NAME, DEPARTMENT_ID, SALARY
+FROM    EMPLOYEES
+WHERE   SALARY > ALL (SELECT SALARY
+                  FROM    EMPLOYEES
+                  WHERE   DEPARTMENT_ID = 100)
+ORDER BY 4;
+
+--=============================================
+-- > ALL은 > 최댓값 (MAX)로 대체가능
+--=============================================
 
 
 
 
 
 
+--=============================================
+-- < ALL은 < 최저값 (MIN)로 대체가능
+--=============================================
+
+SELECT  employee_id, LAST_name, department_id, salary
+FROM    employees
+WHERE   salary < ( SELECT MIN(salary)
+                   FROM    employees
+                   WHERE   department_id = 30);
+
+--------------
+--서브쿼리 연산자  | 대체가능
+-------------------------------
+-- > ANY         |  MIN()
+-- < ANY         |  MAX()
+-- > ANY         |  MAX()
+-- < ANY         |  MIN()
+-----------------------------------
+
+--P.56
+-- = ANY
+-- = ALL
+
+SELECT  EMPLOYEE_ID, LAST_NAME, DEPARTMENT_ID
+FROM    EMPLOYEES
+--WHERE   DEPARTMENT_ID IN (10,20,30);
+--WHERE   DEPARTMENT_ID = ANY (10,20,30);
+WHERE   DEPARTMENT_ID < ANY (10,20,30);
+
+
+
+[예제6-14] 20번 부서원의 급여와 같은 급여를 받는 사원의 사번, 이름, 부서번화, 급여를 부서코드 순/ 급여순으로 조회하시오
+SELECT  EMPLOYEE_ID, LAST_NAME, DEPARTMENT_ID, SALARY
+FROM    EMPLOYEES
+--WHERE   SALARY = ANY (13000, 6000);
+--WHERE   SALARY IN (13000, 6000);
+WHERE   SALARY = 13000
+OR      SALARY = 6000;
+
+
+SELECT  SALARY
+FROM    EMPLOYEES
+WHERE   DEPARTMENT_ID = 20;
+
+--부서확인
+SELECT  DEPARTMENT_NAME
+FROM    DEPARTMENTS
+WHERE   DEPARTMENT_ID = 20;
+
+
+--=================================
+--= ANY는 IN 으로 대체 가능
+--=================================
+
+--NOT IN <> ANY != ANY로 대체 가능
+--NOT IN 연산자는 <> ALL 대체 가능
+
+SELECT  EMPLOYEE_ID, LAST_NAME, DEPARTMENT_ID, SALARY
+FROM    EMPLOYEES
+WHERE   DEPARTMENT_ID NOT IN (10, 20)
+ORDER BY 3;
+--=
+SELECT  EMPLOYEE_ID, LAST_NAME, DEPARTMENT_ID, SALARY
+FROM    EMPLOYEES
+WHERE   DEPARTMENT_ID <> ALL (10, 20)
+ORDER BY 3;
+--====================================================
+--NOT IN 연산자를 <> ANY 로 변경하면 <--> 모든 부서를 조회한 것과 같은 결과가 추출
+--====================================================
+
+--6.3 다중 커럼 서브쿼리
+--서브쿼리의 실행 결과가 여러 개의 컬럼을 반환하는 것
+--★ UPDATE, DELETE, INSERT 시 한번에 여러 행의 컬럼 데이터를 변경하고자 할때
+
+
+[예제6-18] 매니저가 없는 사원이 매니저로 있는 부서코드, 부서명을 조회하시오
+-- MANAGER_ID IS NULL : 사장님 (사번:100 : 90, 급여: 24000)
+--서브쿼리
+SELECT  DEPARTMENT_ID, DEPARTMENT_NAME
+FROM    DEPARTMENT
+WHERE   (DEPARTMENT_ID, MANAGER_ID) IN (SELECT  DEPARTMENT_ID, EMPLOYEE_ID
+                                        FROM    EMPLOYEES
+                                        WHERE   MANAGER_ID IS NULL );
 
 
 
 
 
+--일반쿼리 3~4단계
+SELECT  EMPLOYEE_ID
+FROM    EMPLOYEES
+WHERE   MANAGER_ID IS NULL;
+
+SELECT  DEPARTMENT_ID
+FROM    EMPLOYEES
+WHERE   MANAGER_ID = 100;
+
+SELECT  MANAGER_ID
+FROM    EMPLOYEES
+
+SELECT   DEPARTMENT_ID
+FROM     DEPARTMENTS
+WHERE   MANAGER_ID = 100;
+
+/*
+    다중컬럼 서브쿼리 예제 : 좀더 이해하기 위한~
+    EMPLOYEES 테이블 : 사원정보, 급여정보, 부서,...
+    매달 말 부서 별로/ 사원별로 지급되는 급여에 대한 집계를 하고자 할때 <==> 테이블을 생성, 집계해서 추가/ 업데이트!
+    --> 스케줄러 들록(PL/SQL)
+*/
+--부서별로 월별 지급된 사원의 수, 급여 합계, 급여 평균, 급여 최고, 급여 최소..
+--마감 : MAGAM ==> 월별 집계/통계
+--날짜 정보
+--사원 수 정보
+--급여 합계 정보
+--급여 평균 정보
+--...ETC..
+CREATE TABLE MONTH_SALARY (
+    MAGAM_DATE  DATE NOT NULL,
+    DEPT_ID NUMBER,
+    EMP_CNT NUMBER,
+    SUM_SALARY NUMBER,
+    AVG_SALARY NUMBER
+);
+
+--II. 부서별 집계
+-- 사원의 수
+SELECT DEPARTMENT_ID,  COUNT(*)
+FROM    EMPLOYEES
+GROUP BY DEPARTMENT_ID
+ORDER BY 1;
+
+-- 급여 합계
+SELECT DEPARTMENT_ID,  SUM(SALARY)
+FROM    EMPLOYEES
+GROUP BY DEPARTMENT_ID
+ORDER BY 1;
+
+--급여 합계
+SELECT DEPARTMENT_ID,  ROUND(AVG(SALARY))
+FROM    EMPLOYEES
+GROUP BY DEPARTMENT_ID
+ORDER BY 1;
+
+--(매)달의 마지막 날짜
+SELECT SYSDATE CURR_DATE, LAST_DAY(SYSDATE) LAST_DATE
+FROM    DUAL;
+
+--III. 실제 데이터를 삽입하자
+-- ITAS : INSERT INTO 테이블 AS SELECT ~ 이하  [한번에 조회된 결과를 다른 테이블에 삽입하는 구문]
+-- CTAS : CREATE TABLE 테이블 AS SELECT ~ 이하  [한번에 조회된 결과를 다른 테이블에 삽입하여 삽입]
+INSERT INTO MONTH_SALARY (MAGAM_DATE, DEPT_ID)
+SELECT LAST_DAY(SYSDATE), DEPARTMENT_ID
+FROM    EMPLOYEES
+GROUP BY DEPARTMENT_ID
+ORDER BY 2;
+
+--IV. 데이터 확인
+SELECT *
+FROM    MONTH_SALARY;
+
+--V. 다중컬럼 서브쿼리로 EMP_CNT(사원수), SUM_SALARY(급여합), AVG_SALARY(급여평균)을 NULL인 값들을 갱신
+UPDATE 테이블명
+SET 컬럼명1=값1,
+    컬럼명2=값2,
+    ...
+WHERE 조건절;
+
+UPDATE MONTH_SALARY M
+SET EMP_CNT=( SELECT    COUNT(*)
+              FROM      EMPLOYEES E
+              WHERE     E.DEPARTMENT_ID = M.DEPT_ID
+              GROUP BY  E.DEPARTMENT_ID)
+              
+--    SUM_SALARY=(),
+--    AVG_SALARY=()
+--WHERE 조건절;
+
+--MAGAM_DATE, DEPT_ID에 입력한 데이터를 실제 저장공간에 저장: 현재는 메모리에서 기억하고 있지만..
+COMMIT;
+
+-- UPDATE 구문 연습
+UPDATE EMPLOYEES
+SET SALARY = 0; -- 조건절을 생략 ==> 모든 레코드의 SALARY를 0으로 업데이터 하는 결과
+
+SELECT *
+FROM EMPLOYEES;
+
+--ROLLBACK;
+
+-- VII. 12번 행의  NULL 값을 업데이트하려면? (부서가 배정되지 않은 사원 KIMBERELY의 데이터를 업데이트 해보시오)
+UPDATE MONTH_SALARY
+SET EMP_CNT = ( SELECT COUNT(*)
+                FROM    EMPLOYEES
+                WHERE   DEPARTMENT_ID IS NULL),
+SUM_SALARY =(SELECT SUM(SALARY)
+                FROM    EMPLOYEES
+                WHERE   DEPARTMENT_ID IS NULL),
+AVG_SALARY =(SELECT ROUND(AVG(SALARY))
+                FROM    EMPLOYEES
+                WHERE   DEPARTMENT_ID IS NULL)
+WHERE   DEPT_ID IS NULL;
 
 
-
-
-
+--6.4 상호연관 서브쿼리
+--메인 쿼리의 컬럼이 서브쿼리의 조건절에 사용되는 서브쿼리로, 메인 쿼리에 독립적이지 않은 형식이다
+[예제6-19] 매니저가 있는 부서코드에 소속된 사원들의 수를 조회하시오
+--매니저가 없는 사람 : 사장님, 90번 경영부
+--매니저가 있는 사람 : 사장님 제외 전원(106명)
 
 
 
