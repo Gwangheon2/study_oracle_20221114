@@ -3,10 +3,15 @@
 --1)서브쿼리는 관호로 묶어서 사용
 --2)메인쿼리 vs 서브쿼리 : ()로 묶인 부분
 
+--연관성의 유,무
+-- 결과행의 갯수(단일 vs 다중 행 또는 컬럼)에 따른 구분
+
 --6.1단일 행 서부쿼리 : 서브쿼리 실행 결과가 하나의 결과 행을 반환하는 서브쿼리
 --6.2다중 행 서부쿼리 : 서브쿼리 실행 결과가 여러개의 결과 행을 반환하는 서브쿼리
 --6.3다중 컬럼 서부쿼리 : 서브쿼리 실행 결과가 둘 이상의 컬럼을 반환하는 서브쿼리
 --6.4상호 연관 서부쿼리 : 메인쿼리의 컬럼이 서브컬럼의 조건으로 사용
+
+--사용 위치에 따른 구분
 --6.5스칼라 서부쿼리 : SELECT 절에 사용되는 서브쿼리 (=컬럼)
 --6.6인라인 뷰 서브쿼리 : FROM 절에 사용되는 서브쿼리
 
@@ -450,6 +455,118 @@ WHERE   DEPT_ID IS NULL;
 [예제6-19] 매니저가 있는 부서코드에 소속된 사원들의 수를 조회하시오
 --매니저가 없는 사람 : 사장님, 90번 경영부
 --매니저가 있는 사람 : 사장님 제외 전원(106명)
+
+
+--==============================
+--일반적인 서브쿼리(WHERE) VS SELECT절, FROM절에 쓰는 서브쿼리
+--============================
+--SELECT 컬럼1, 컬럼2, 테이블2, ... : 인라인 뷰 서브쿼리 위치
+--FROM   테이블1, 테이블2,      ... : 인라인 뷰 서브쿼리 위치
+--WHERE  조건들                    : 일반적인 서브쿼리 위치
+
+--6.5 스킬라 서브쿼리
+--SELECT 절에 사용하는 서브쿼리 형태
+--코드성 테이블에서 코드명을 조회한거나, 그룹 함수의 결과 값을 조회할때 사용한다.
+--ST_CLERK                         , AVG(salary)
+
+[예제6-22] 사원의 이름, 급영, 부서, 부서명, 정보를 조회하시오
+-- 스칼라서브쿼리 조회
+SELECT  E.FIRST_NAME, E.SALARY, E.DEPARTMENT_ID,
+        (SELECT DEPARTMENT_NAME
+         FROM DEPARTMENTS D
+         WHERE D.DEPARTMENT_ID = E.DEPARTMENT_ID) DEPT_NAME
+FROM    EMPLOYEES E
+ORDER BY    E.DEPARTMENT_ID;
+
+
+SELECT  FIRST_NAME, SALARY, DEPARTMENT_ID,
+        ( SELECT (AVG(SALARY))
+          FROM    EMPLOYEES ) AVG_SAL
+FROM    EMPLOYEES
+ORDER  BY DEPARTMENT_ID;
+
+
+-- 일반 쿼리로 조회 : 
+-- EMPLOYEES ~ DEPARTMENT 테이블 관계 : JOIN 연산
+SELECT  E.FIRST_NAME, E.SALARY, E.DEPARTMENT_ID,
+D.DEPARTMENT_NAME
+FROM    EMPLOYEES E, DEPARTMENTS D
+
+
+SELECT *
+FROM    MONTH_SALARY;
+
+SELECT DEPT_ID, SUM_SALARY, AVG_SALARY
+FROM    MONTH_SALARY;
+
+
+[연습문제6-3]
+1.각 부서에 대해 부서코드, 부서명, 부서가 위치한 도시이름을 조회하는 쿼리문을 스칼라 서브뭐리와 일반 쿼리로 조회하시오
+
+SELECT DEPARTMENT_ID, DEPARTMENT_NAME,
+           (SELECT CITY
+            FROM LOCATIONS L
+            WHERE L.LOCATION_ID = D.LOCATION_ID ) CITY_NAME 
+FROM    DEPARTMENTS D
+ORDER BY 1;
+
+--일반 쿼리 : JOIN연산 (오라클 조인)
+SELECT DEPARTMENT_ID, DEPARTMENT_NAME,
+L.CITY
+FROM    DEPARTMENT D INNER JOIN LOCATIONS L
+USING   (LOCATION_ID)
+ORDER BY 1;
+
+
+SELECT D.DEPARTMENT_ID, D.DEPARTMENT_NAME,
+        L.CITY
+FROM    DEPARTMENT D INNER JOIN LOCATIONS L
+USING   (LOCATION_ID)
+ORDER BY 1;
+
+--6.6 인라인 뷰 (객체) <--------> 서브쿼리의 (작성 위치에 따른) 구분
+--메인 쿼리에 독립적이고 WHERE절에서 
+--뷰(VIEW)           VS          테이블(TABLE)
+--임시성 테이블                   영구적인 테이블
+--쿼리실행 생성~종료하면 사라짐      계속 살아있음
+--(메모리)                         저장 장치(물리적)
+
+--ex> 오라클 설치시 미리 만들어준 EMP_DETALLS_VIEW를 조회 
+-- 모든 테이블의 데이터를 개발자에게 주지 않기 위한것(?)
+-- 급여관리 앱 개발자 --> 사원들의 정보, 급여, 계좌정보     +@ (가족,재산,..부서)
+DESC    EMP_DETAILS_VIEW;
+SELECT * FROM EMP_DETAILS_VIEW;
+
+--==================================
+--인라인 뷰 서브쿼리는 서브쿼리다
+--===============================
+[예제6-24] 급여가 회사 평균급여 이상이고, 최대급여 이하인 사원의 사번, 이름, 급여, 회사평균급여, 회사최대급여를 조회하시오
+--일반쿼리로
+--1.평균급여
+SELECT ROUND(AVG(SALARY)) AVG_SAL
+FROM    EMPLOYEES;
+
+--2.최대쿼리
+
+SELECT EMPLOYEE_ID, LAST_NAME, SALARY
+FROM    EMPLOYEES
+WHERE   SLARY >= 6462
+AND     SALARY <= 24000;
+
+--회사평균급여, 회사최대급여 컬럼이 존재하지 않음 (EMPLOYEES와 그외 어떠한 테이블에서도...)
+--인라인 뷰 서브쿼리로, 마치 그러한 테이블이 존재하듯이 (집계성 테이블, MONTH_SALARYC처럼)
+--인라인 뷰 서브쿼리로 해결해보자 
+
+
+
+
+[예제6-25]
+
+select  decode(ro_char(hire_date, 'mm'), '01', count(*), 0) 1월
+from    employees
+
+
+
 
 
 
