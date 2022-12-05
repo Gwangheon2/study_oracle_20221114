@@ -1,0 +1,301 @@
+--8장. DML
+-- 수동으로 COMMIT 이나 ROLLBACK      vs   자동으로 COMMIT 되는 것 (DDL : CREATE, ALTER, DROP, TRUNCATE / AUTO COMMIT)
+-- 트랜잭션(Transaction, 거래 / 송금시 전기가 차단되어 송금결과를 못본 상태에서 계좌상의 금액이 옮겨지는 일이 없도록
+-- 은행에서는 실제 거래가 잘 이뤄졌음을 확인하고 해당 조치를 수행)
+-- 인출()
+-- 송금()
+
+-- Data 조작 언어
+-- 개발자들이 가장 많이 사용하는 문법   vs   모델러, DBA, 데이터분석가...
+-- SELECT, INSERT, UPDATE, DELETE 구문
+
+--8.1 데이터 삽입
+-- INSERT INTO 테이블 (컬럼명1, 컬럼명2,..) : 순서, 컬럼갯수 중요
+-- VALUES (값1, 값2,...) 
+
+-- INSERT INTO 테이블   : 모든 컬럼을 데이터 삽입(생략x)
+-- VALUES (값1, 값2...)
+
+-- emp 라는 테이블 생성
+-- 12.2 수업참여자의 경우 emp 테이블을 먼저 DROP 한 뒤에~ 실행!
+DROP TABLE emp;
+-- 1.hr 스키마 ==> EMPLOYEES 테이블중 일부 컬럼을 가져와서 emp로 만드는 방법 : CTAS (조회된 
+-- CREATE TABLE 테이블명
+-- SELECT 이하~ 
+CREATE TABLE emp AS
+SELECT  employee_id emp_id, first_name fname, last_name lname, hire_date, job_id, salary,
+        commission_pct comm_pct, department_id dept_id
+FROM    employees -- 컬럼과 데이터를 함께 조회후 emp 테이블을 생성하고 데이터를 삽입
+-- CTAS로 테이블을 복사하면, 관련된 제약조건들도 복사가 된다.
+
+desc emp;
+select * from emp;
+-- ======================================================================
+-- 테이블 제약조건을 확인하는 명령
+SELECT  *
+FROM    user_constraints
+WHERE   table_name = 'EMP'; -- EMP 라는 테이블에 정의된 제약조건을 확인
+-- ======================================================================
+
+INSERT INTO emp (emp_id, fname, lname, hire_date, job_id)
+VALUES (301, 'Bill', 'Gates', TO_DATE('2013/05/26', 'yyyy/mm/dd'), 'SA_CLERK'); -- JOB_ID NOT NULL 제약조건때문에 데이터 삽입시 오류
+
+-- 2.emp 라는 테이블을 직접 정의 
+CREATE TABLE emp (
+    EMP_ID NUMBER PRIMARY KEY,
+    FNAME VARCHAR2(30),
+    LNAME VARCHAR2(20),
+    HIRE_DATE DATE DEFAULT SYSDATE,
+    JOB_ID VARCHAR2(20), -- NOT NULL 조건을 명시하지 않으면, NULL 값 허용!
+    SALARY NUMBER(9,2),
+    COMM_PCT NUMBER(3,2),
+    DEPT_ID NUMBER(3) -- 외래키 제약조건등이 없어서 삽입이 바로 됨!!
+);
+
+[예제8-1]
+INSERT INTO EMP (emp_id, fname, lname, hire_date, job_id)
+VALUES (300, 'Steven', 'Jobs', SYSDATE, 'ST_MAN');
+
+COMMIT; -- 수동으로 개발자가 커밋(메모리 --> 물리적으로 저장)
+
+-- 자동커밋되는 명령
+TRUNCATE TABLE emp; -- emp 테이블의 모든 데이터를 삭제 / 구조는 남김 + (자동으로 COMMIT;)
+ROLLBACK; -- 수동으로 롤백
+SELECT * FROM EMP;
+
+-- A팀의 팀장 : GRANT CONNECT, CREATE VIEW, RESOURCES TO 팀원1;
+
+
+[예제8-4] 워렌버핏의 정보를 입력 , NULL 또는 '' 빈문자열로 표시
+INSERT INTO emp (emp_id, fname, lname, hire_date, job_id, salary)
+VALUES (302, 'Warren', 'Buffett', SYSDATE, 'ST_CEO','');
+
+SELECT *
+FROM    emp;
+
+
+[예제8-5] 
+-- CTAS : CREATE TABLE 테이블명 AS SELECT 이하
+-- ITAS : INSERT INTO 테이블 (AS없음) SELECT 이하
+INSERT INTO emp (emp_id, fname, lname, hire_date, job_id, dept_id)
+SELECT employee_id, first_name, last_name, hire_date, job_id, department_id
+FROM    employees
+WHERE   department_id IN (10, 20);
+
+COMMIT;
+
+-- 월별 급여 관리 테이블 : month_salary
+-- 다중 컬럼 서브쿼리 실습에서 사용했음
+DESC month_salary;
+
+SELECT  *
+FROM    month_salary;
+
+[예제 8-6]
+TRUNCATE TABLE month_salary; -- 모든 데이터를 지우고 자동 커밋!
+
+
+
+-- ITAS
+INSERT INTO month_salary (magam_date, dept_id)
+SELECT  SYSDATE, department_id
+FROM    employees
+WHERE   department_id IS NOT NULL
+GROUP BY department_id
+
+SELECT * FROM month_salary;
+
+-- 나머지 NULL 채우려면, 다중컬럼 서브쿼리를 사용해서 UPDATE 구문 실행
+
+[예제8-7] emp 테이블에 employees 테이블의 30번부터 60번 부서에 근무하는 사원의 정보를 조회해서 삽입하시오
+INSERT INTO emp
+SELECT  employee_id, first_name, last_name, hire_date, job_id, salary, commission_pct, department_id
+FROM    employees
+WHERE   department_id BETWEEN 30 AND 60; -- 57 rows
+
+SELECT * FROM EMP;
+
+-- ===================================================================
+-- INSERT INTO 테이블명 (컬럼명1, 컬럼명2,..) VALUES (값1, 값2, ...)
+-- INSERT INTO 테이블명 VALUES (값1, 값2, ...컬럼수만큼)
+-- INSERT INTO 테이블명 SELECT 이하~ : ITAS (AS 없음)
+-- ===================================================================
+
+
+-- 8.2 데이터 변경 / UPDATE
+-- INSERT           VS    UPDATE
+-- 새로운 데이터 삽입  vs    기존 데이터를 변경해서 저장(=갱신)
+
+-- UPDATE 테이블명
+-- SET 컬럼명=값
+-- WHERE 조건절        :    where 조건절 생략시 모든 행이 변경대상
+-- COMMIT or ROLLBACK;
+-- UPDATE 구문 + 다중컬럼 서브쿼리 : 테이블의 여러 행의 컬럼을 한번에 업데이트할때 좋다!
+SELECT *
+FROM    employees;
+
+UPDATE employees
+SET salary = ( SELECT MIN(salary) FROM employees );
+
+ROLLBACK;
+
+
+[예제8-8] 사번이 300번 이상인 사원의 부서코드를 20으로 변경하시오
+
+rollback;
+UPDATE emp
+SET dept_id = 20
+--WHERE   emp_id >= 300; -- 조건에 일치하는 행(row)의 컬럼 데이터를 갱신
+
+[예제8-9]emp테이블에서 사번이 300번인 사원의 급여, 커미션 백분율, 업무코드를 변경하시오
+-- 급여는 2000, 커미션백분율은 0.1로, 업무코드는 IT_PROG
+
+UPDATE emp
+SET salary=2000,
+    comm_pct=0.1,
+    job_id='IT_PROG'
+WHERE   emp_id=300;    
+    
+SELECT * FROM emp;
+COMMIT;
+[예제8-10] emp 테이블의 모든 사원들의 salary를 5000, 보너스 백분율을 0.4로 변경하여 저장하시오
+UPDATE emp
+SET salary=5000,
+    comm_pct=0.4;
+        
+
+[예제8-11] 서브쿼리를 이용해서 emp 테이블의 103번 사원의 급여를 employees 테이블의 20번 부서의 최대 급여로 변경
+하시오
+
+-- I. 일반쿼리
+SELECT  MAX(salary)
+FROM    employees
+WHERE   department_id = 20; -- 13000
+
+UPDATE emp
+SET salary = 13000
+WHERE   emp_id = 103; -- 0개 업데이트 / 103번 사원이 : 9000 --> 13000 으로 (진급?)
+
+INSERT INTO emp
+SELECT  employee_id, first_name, last_name, hire_date, job_id, salary, commission_pct, department_id
+FROM    employees
+WHERE   employee_id = 103;
+
+SELECT * FROM   emp;
+
+-- II.서브쿼리로 데이터를 변경
+-- 사용위치 따라 : SELECT절(=스칼라), FROM절(=인라인뷰), WHERE절 (=일반적인 서브쿼리)
+-- 연관성(JOIN연산) 유무 : 상호연관 서브쿼리
+-- 결과행 : (단일 컬럼)단일 행, (단일 컬럼)다중 행, (다중 행)다중 컬럼
+ROLLBACK;
+
+UPDATE emp
+SET salary = (  SELECT  MAX(salary)
+                FROM    employees
+                WHERE   department_id = 20 )
+WHERE   emp_id = 103;
+
+[예제8-12] emp 테이블의 사번 180번 사원과 같은 해에 입사한 사원들의 급여를 employees 테이블 50번 부서의 평균
+급여로 변경하는 쿼리를 작성하시오
+
+
+UPDATE emp
+SET = (50번 부서의 평균 급여)
+WHERE   입사일이 180번 사원과 같은 해
+
+-- I.일반쿼리
+SELECT ROUND(AVG(salary))
+FROM    employees
+WHERE   department_id = 50; -- 3476
+
+SELECT TO_CHAR(hire_date, 'yyyy') -- 2006
+FROM    employees
+WHERE   employee_id = 180
+--COMMIT;
+UPDATE emp
+SET salary = 3476
+WHERE   TO_CHAR(hire_date,'yyyy') = '2006';
+
+-- II.서브쿼리를 사용한다면?
+ROLLBACK;
+
+UPDATE emp
+SET salary = (  SELECT ROUND(AVG(salary))
+                FROM    employees
+                WHERE   department_id = 50  )
+WHERE   TO_CHAR(hire_date,'yyyy') = (   SELECT TO_CHAR(hire_date, 'yyyy') -- CHAR
+                        FROM    employees
+                        WHERE   employee_id = 180   ); --24 rows
+--SELECT 1 + '1'
+--FROM    dual;
+
+SELECT *
+FROM    emp;
+/*
+TRUNCATE TABLE emp;
+
+INSERT INTO emp
+SELECT employee_id, first_name, last_name, hire_date, job_id, salary, commission_pct, department_id
+FROM    employees;
+*/
+
+[예제8-14] 다중컬럼 서브쿼리로 month_salary의 모든 행의 컬럼 데이터를 업데이트 하시오
+SELECT *
+FROM    month_salary;
+TRUNCATE TABLE month_salary;
+-- ※ 기존의 month_salary의 데이터 삭제는 TRUNCATE TABLE emp; 후에~
+-- I. magam_date, dept_id 를 먼저 INSERT
+INSERT INTO month_salary (magam_date, dept_id)
+SELECT  LAST_DAY(SYSDATE), department_id
+FROM    employees
+WHERE   department_id IS NOT NULL
+GROUP BY    department_id;
+
+SELECT *
+FROM    month_salary;
+-- II. 다중컬럼 서브쿼리를 이용해서 emp_cnt, sum_sal, avg_salary UPDATE
+-- 단, UPDATE는 다중컬럼 서브쿼리로 작성하시오
+UPDATE month_salary m
+SET (emp_cnt, sum_salary, avg_salary) = (   SELECT  COUNT(*), SUM(e.salary), ROUND(AVG(e.salary))
+                                            FROM    employees   e
+                                            WHERE   e.department_id = m.dept_id
+                                            GROUP BY e.department_id )
+--WHERE                                            
+
+COMMIT;
+
+-- 8.3 DELETE / 데이터 삭제
+-- 조건에 명시된 데이터 행(row)을 삭제하는 명령
+/*
+    DELETE FROM 테이블명
+    WHERE   조건절
+*/
+
+-- ※ WHERE 절 생략시 모든 데이터(=레코드) 삭제
+-- ROLLBACK 으로 트랜잭션 처리 이전으로 돌아가기!!
+
+[예제8-15] emp 테이블의 60번 부서의 사원 정보를 삭제하시오
+SELECT *
+FROM    emp
+WHERE   dept_id = 60; -- 총 107명, 60번 부서원은 5명
+
+DELETE FROM emp
+WHERE dept_id = 60;
+
+ROLLBACK;
+
+[예제8-16] emp 테이블에서 모든 데이터를 삭제하시오
+DELETE FROM emp;
+-- 102개 행 이(가) 삭제되었습니다
+
+
+TRUNCATE TABLE emp;
+-- Table EMP이(가) 잘렸습니다. (테이블의 구조는 남기고, 데이터는 삭제 <---> 비움)
+
+
+
+
+
+
+
+
