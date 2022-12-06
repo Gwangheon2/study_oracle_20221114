@@ -293,6 +293,62 @@ TRUNCATE TABLE emp;
 -- Table EMP이(가) 잘렸습니다. (테이블의 구조는 남기고, 데이터는 삭제 <---> 비움)
 
 
+commit;
+
+
+[예제9-4] 부서테이블의 데이터를 복사 하여
+
+CREATE TABLE DEPTL AS
+SELERT *
+FROM    DEPARTMENTS;
+
+DESC DEPT1;
+
+SELECT *
+FROM    DEPT1;
+
+[예제9-5] 사원테이블의 사번, 이름, 입사일 컬럼의 데이터를 복사하여 EMP20 테이블 생성하시오
+CREATE TABLE EMP20 AS
+SELECT EMPLOYEE_ID, FIRST_NAME, HIRE_DATE
+FROM    EMPLOYEES;
+
+DESC EMP20;
+
+SELECT *
+FROM    EMP20;
+
+[예제9-6] 부서테이블을 데이터 없이 복사하여(=구조만 복사) DEPT2 테이블을 생성하시오
+-- WHERE 조건절을 거짓 조건으로 만들어, 복사되는 데이터가 없도록 테이블을 생성하는 방법
+CREATE TABLE DEPT2 AS
+SELECT*
+FROM    DEPARTMENTS
+WHERE   1 = 2;
+
+DESC DEPT2
+
+DESC DEPT2; -- NN 복사 OK,
+
+SELECT*
+FROM    DEPT2;
+
+9.3 ALTER TABLE / 테이블의 구조 변경 명령
+--데이터가 없다면? 테이블을 잘못 생성했을때, 삭제하고 다시 생성
+--데이터가 있을경우? 테이블의 구조, 조약조건, BYTE 등을 변경
+--                  새로운 컬럼 추가시, 당연히 데이터는 NULL 세팅
+
+--※ 테이블의 구조를 변경하는 명령 (컬럼추가, 컬럼 삭제 컬럼 변경- 이름,크기)
+
+
+--9.3.1 컬럼추가
+--테이블의 컬럼을 추가하는 형식
+--ALTER TABLE 테이블명
+--ADD (컬럼명1 데이터타입1, 컬럼명2 데이터타입2, ...)
+
+[예제9-7] EMP20 테이블에 숫자타입 급여 컬럼, 문자타입
+DESC EMP20;
+DESC DEPT2;
+
+
 
 
 
