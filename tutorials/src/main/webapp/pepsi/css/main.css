@@ -1,0 +1,78 @@
+@charset "UTF-8";
+/* 초기화 스타일 (reset style ==> reset css) */
+*{
+	margin: 0;
+}
+/* css selector
+	1) universal : 공용 선택자, *
+	1) tag : 태그 선택자, p / h1 / img ...
+	1) class : 클래스 선택자, .d-none
+	1) id : 아이디 선택자, #box
+	1) group : 그룹 선택자 p, h1, .d-none ...[콤마]
+*/	
+.d-none {
+	display: none; /* 표시: 없음 (vs block) */
+}
+.logo {
+	/*background-color: gold; /* 배경-색: 노랑 */
+	/*text-align: center; /* 공간의 폭을 모를때, 그냥 가운데 정렬하고 싶을때*/
+	width: 100px; /* 가로폭: 100픽셀 */
+	height: 110px; /* 세로폭: 110픽셀 */
+	margin: 50px auto; /* (바깥)여백: 상,하 50/ 좌,우 알아서(=자동으로 계산) */
+	/* px : 길이의 단위, 마치 cm, m 쓰듯 ...*/
+}	
+.menu {
+	background-color: #005891; /* 색상 HEX CODE : 16진수 색상코드 -->2의16승 색상*/
+	font-size: 14px; 
+	text-align: center;
+	padding: 10px 0;
+}
+
+
+
+
+
+.visual {
+	width: 800px;
+	height: 500px;
+	margin: 0 auto;
+}
+.title-text {
+	text-align: center;
+	font-size: 14px;
+}
+.title-text h2 {
+	text-align: center;
+	font-size: 22px; /*글자-크기 : 22픽셀 */
+}
+.title-text p {
+	text-align: center;
+	font-size: 16px;
+}
+.img2 {
+	text-align: center;
+	background-color: #f3f3f3;
+	
+}
+.cs {
+	text-align: center;
+	color : #005891;
+	font-size:15px;
+	margin-top:30px; /* -top, -right, -bottom, -left*/
+}
+.num {
+	text-align: center;
+	color : #005891;
+	font-size:30px;
+	margin-bottom:15px;
+}
+.hanul {
+	text-align: center;
+	
+}
+
+
+
+ 
+
+
