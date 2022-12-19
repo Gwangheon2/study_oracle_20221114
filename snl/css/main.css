@@ -1,0 +1,73 @@
+@charset "UTF-8";
+
+*{
+	margin: 0;
+}
+
+.d-none{
+	display: none;
+}
+
+.site-identity{
+	width: 154px;
+	height: 152px;
+	margin: 0 auto;
+	
+}
+
+.site-visual {
+	margin-top:30px;
+	background-color: rgb(0, 111, 255);
+	background-image: url("../images/visual-wide.png"); /* 배경-이미지: url(이미지 파일의 경로, 이름, 형식)*/
+	background-repeat: no-repeat; /* 배경-반복: 안함*/
+	background-position: center center;	
+}
+
+.model {
+	width: 800px;
+	margin: 0 auto;
+	text-align: right;
+}
+
+.site-nav {
+	text-align: center;
+	background-color: black; /* #000 or rgb(0,0,0) */
+	color: white;
+	padding: 0.8rem 0; /* 안여백: 상하 16x0.5 픽셀 만큼 적용 */
+}
+
+a {
+	color: inherit; /* 글자-색상: 상속(부모의 색상으로) */
+	text-decoration: none;
+}
+
+.site-nav a {
+	margin: 0 .5rem;
+}
+.site-nav a:hover { /* Pseudo-class Selector : 가상 선택자*/
+	color: #01ccff;
+}
+
+table, th, td {
+	border: 1px solid #333;
+	border-collapse: collapse;
+}
+th,td {
+	padding: .5rem 0;
+	text-align: center;
+}
+
+.enter-fee {
+	width: 600px; /* Q. 가로는 어떻게?? 블럭 100% */
+	margin: 30px auto 30px;
+	/* Q. 그럼 세로는?? */	
+	
+}
+
+.vertical-middle {
+	vertical-align: middle; /* 테이블, 인라인 요소의 수직 정렬에만 사용 */
+}
+
+
+
+
