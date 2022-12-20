@@ -56,17 +56,65 @@ th,td {
 	padding: .5rem 0;
 	text-align: center;
 }
-
-.enter-fee {
+caption {
+	font-size: 1.125em;
+	font-weight: bold; /*normal; 글꼴- 두께: 굵게*/
+	padding-bottom: 1em;
+}
+.enter-fee, .day-casting {
 	width: 600px; /* Q. 가로는 어떻게?? 블럭 100% */
 	margin: 30px auto 30px;
 	/* Q. 그럼 세로는?? */	
 	
 }
+.enter-fee th, .day-casting th {
+	width: 25%; /* calc(600px / 4); */
+}
 
+.day-casting td {
+	width:75%;
+	text-align: left;
+	padding: 0 0 0 3em;
+}
 .vertical-middle {
 	vertical-align: middle; /* 테이블, 인라인 요소의 수직 정렬에만 사용 */
 }
+.cell-bg{
+	background-color: #ffeded;
+	
+}
+
+.site-subnav {
+	color: #666;
+	font-size: 13px;
+	background-color: #fafafa;
+	text-align: center;
+	padding: .5rem 0;
+	border-top: 1px solid #666;
+}
+.site-subnav a {
+	margin-right: .5rem;
+}
+
+.site-subnav a:hover {
+	text-decoration: underline;
+}
+.site-info {
+	background-color: #000;
+	font-size: 81.25%;
+	text-align: center;
+	
+}
+
+.site-info p {
+	color: #666;
+	margin: 0 0 1rem 0;
+}
+
+
+
+
+
 
 
 
